@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { useProducts } from '@/contexts/ProductContext';
@@ -18,7 +17,7 @@ import {
   Trash2,
   Barcode,
   Printer,
-  Cash,
+  BanknoteIcon,
   CreditCard,
   Wallet
 } from "lucide-react";
@@ -377,7 +376,7 @@ const POS = () => {
                   }`}
                   onClick={() => setPaymentMethod('cash')}
                 >
-                  <Cash className="h-8 w-8 mb-2" />
+                  <BanknoteIcon className="h-8 w-8 mb-2" />
                   <span>Tunai</span>
                 </Button>
                 <Button 

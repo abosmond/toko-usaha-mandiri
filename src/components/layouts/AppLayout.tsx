@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
+import { UserRole } from '@/types';
 import { 
   LogOut,
   User,
@@ -10,7 +11,7 @@ import {
   CreditCard,
   Box,
   FileText,
-  ChartBar,
+  BarChart,
   Users
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -33,31 +34,31 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       name: "POS",
       path: "/pos",
       icon: <CreditCard className="w-6 h-6" />,
-      allowedRoles: ['admin', 'manager', 'cashier'],
+      allowedRoles: ['admin', 'manager', 'cashier'] as UserRole[],
     },
     {
       name: "Dashboard",
       path: "/dashboard",
-      icon: <ChartBar className="w-6 h-6" />,
-      allowedRoles: ['admin', 'manager'],
+      icon: <BarChart className="w-6 h-6" />,
+      allowedRoles: ['admin', 'manager'] as UserRole[],
     },
     {
       name: "Produk",
       path: "/products",
       icon: <Box className="w-6 h-6" />,
-      allowedRoles: ['admin', 'manager'],
+      allowedRoles: ['admin', 'manager'] as UserRole[],
     },
     {
       name: "Laporan",
       path: "/reports",
       icon: <FileText className="w-6 h-6" />,
-      allowedRoles: ['admin', 'manager'],
+      allowedRoles: ['admin', 'manager'] as UserRole[],
     },
     {
       name: "Pengguna",
       path: "/users",
       icon: <Users className="w-6 h-6" />,
-      allowedRoles: ['admin'],
+      allowedRoles: ['admin'] as UserRole[],
     },
   ];
 
