@@ -51,6 +51,7 @@ export interface Transaction {
   change?: number;
   cashierId: string;
   customerName?: string;
+  customerId?: string;
   createdAt: string;
 }
 
@@ -80,6 +81,16 @@ export interface Supplier {
   id: string;
   name: string;
   contactName?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
   phone?: string;
   email?: string;
   address?: string;

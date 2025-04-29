@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +13,8 @@ import {
   FileText,
   BarChart,
   Users,
-  Truck
+  Truck,
+  UserPlus
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -52,6 +54,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       name: "Supplier",
       path: "/suppliers",
       icon: <Truck className="w-6 h-6" />,
+      allowedRoles: ['admin', 'manager'] as UserRole[],
+    },
+    {
+      name: "Pelanggan",
+      path: "/customers",
+      icon: <UserPlus className="w-6 h-6" />,
       allowedRoles: ['admin', 'manager'] as UserRole[],
     },
     {
