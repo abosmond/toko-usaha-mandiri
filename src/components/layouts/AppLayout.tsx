@@ -14,7 +14,8 @@ import {
   BarChart,
   Users,
   Truck,
-  UserPlus
+  UserPlus,
+  Package
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -48,6 +49,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       name: "Produk",
       path: "/products",
       icon: <Box className="w-6 h-6" />,
+      allowedRoles: ['admin', 'manager'] as UserRole[],
+    },
+    {
+      name: "Stok",
+      path: "/stock",
+      icon: <Package className="w-6 h-6" />,
       allowedRoles: ['admin', 'manager'] as UserRole[],
     },
     {

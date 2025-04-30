@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layouts/AppLayout';
 import { useProducts } from '@/contexts/ProductContext';
 import { Product, Category } from '@/types';
@@ -27,10 +28,13 @@ import {
   Plus,
   Trash2,
   Edit,
-  Box
+  Box,
+  Package
 } from "lucide-react";
+import { toast } from "sonner";
 
 const Products = () => {
+  const navigate = useNavigate();
   const { 
     products, 
     categories, 
@@ -39,7 +43,8 @@ const Products = () => {
     deleteProduct,
     addCategory,
     updateCategory,
-    deleteCategory 
+    deleteCategory,
+    getLowStockProducts
   } = useProducts();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -160,6 +165,15 @@ const Products = () => {
     setIsDeleteDialogOpen(false);
     setDeleteItem(null);
   };
+
+  const handleStockManagement = (productId?: string) => {
+    if (productId) {
+      // For future implementation: We could add a query parameter to pre-select a product
+      // navigate(`/stock?product=${productId}`);
+      toast.info("Anda akan dialihkan ke halaman manajemen stok");
+    }
+    navigate('/stock');
+  };
   
   return (
     <AppLayout>
@@ -169,9 +183,14 @@ const Products = () => {
           
           <div className="flex gap-2">
             {activeTab === 'products' && (
-              <Button onClick={() => handleOpenProductDialog()}>
-                <Plus className="mr-2 h-4 w-4" /> Tambah Produk
-              </Button>
+              <>
+                <Button onClick={() => handleOpenProductDialog()}>
+                  <Plus className="mr-2 h-4 w-4" /> Tambah Produk
+                </Button>
+                <Button variant="outline" onClick={() => handleStockManagement()}>
+                  <Package className="mr-2 h-4 w-4" /> Kelola Stok
+                </Button>
+              </>
             )}
             
             {activeTab === 'categories' && (
@@ -227,12 +246,14 @@ const Products = () => {
                             <td className="py-3 px-4">{product.sku}</td>
                             <td className="py-3 px-4">{category?.name || 'Unknown'}</td>
                             <td className="py-3 px-4">Rp {product.price.toLocaleString('id-ID')}</td>
-                            <td className="py-3 px-4">
-                              <span className={
-                                product.stock <= product.lowStockThreshold
+                            <td className="py-3 px-4" onClick={() => handleStockManagement(product.id)}>
+                              <span className={`
+                                cursor-pointer hover:underline
+                                ${product.stock <= product.lowStockThreshold
                                   ? 'text-red-500 font-medium'
                                   : ''
-                              }>
+                                }
+                              `}>
                                 {product.stock}
                               </span>
                             </td>
@@ -465,19 +486,51 @@ const Products = () => {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="product-stock">Stok *</Label>
-                <Input 
-                  id="product-stock" 
-                  type="number"
-                  placeholder="0" 
-                  value={productForm.stock || ''}
-                  onChange={(e) => setProductForm({ 
-                    ...productForm, 
-                    stock: parseInt(e.target.value) || 0
-                  })}
-                />
-              </div>
+              {!editingId && (
+                <div className="space-y-2">
+                  <Label htmlFor="product-stock">Stok Awal *</Label>
+                  <Input 
+                    id="product-stock" 
+                    type="number"
+                    placeholder="0" 
+                    value={productForm.stock || ''}
+                    onChange={(e) => setProductForm({ 
+                      ...productForm, 
+                      stock: parseInt(e.target.value) || 0
+                    })}
+                  />
+                </div>
+              )}
+              
+              {editingId && (
+                <div className="space-y-2">
+                  <Label htmlFor="product-stock">Stok Saat Ini</Label>
+                  <div className="flex items-center">
+                    <Input 
+                      id="product-stock" 
+                      type="number"
+                      placeholder="0" 
+                      value={productForm.stock || ''}
+                      readOnly
+                      className="bg-gray-100"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="ml-2"
+                      onClick={() => {
+                        setIsProductDialogOpen(false);
+                        handleStockManagement(editingId);
+                      }}
+                    >
+                      <Package className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Untuk mengubah stok, gunakan halaman manajemen stok
+                  </p>
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="product-threshold">Ambang Batas Stok *</Label>

@@ -1,11 +1,12 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { Product, Category } from '@/types';
+import { Product, Category, StockAdjustment, StockAdjustmentType } from '@/types';
 import { toast } from 'sonner';
+import { useAuth } from './AuthContext';
 
 interface ProductContextType {
   products: Product[];
   categories: Category[];
+  stockAdjustments: StockAdjustment[];
   addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateProduct: (id: string, updates: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
@@ -16,7 +17,22 @@ interface ProductContextType {
   addCategory: (category: Omit<Category, 'id'>) => void;
   updateCategory: (id: string, updates: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
-  updateStock: (productId: string, quantity: number) => void;
+  updateStock: (
+    productId: string, 
+    quantity: number, 
+    adjustmentType: StockAdjustmentType, 
+    supplierId?: string, 
+    notes?: string
+  ) => void;
+  addStockAdjustment: (
+    adjustment: Omit<StockAdjustment, 'id' | 'createdAt' | 'userName' | 'productName' | 'supplierName'>
+  ) => void;
+  getStockAdjustments: () => StockAdjustment[];
+  getStockAdjustmentsByType: (type: StockAdjustmentType) => StockAdjustment[];
+  getStockAdjustmentsByDateRange: (startDate: string, endDate: string) => StockAdjustment[];
+  getStockAdjustmentsByProduct: (productId: string) => StockAdjustment[];
+  getMonthlyPurchases: () => number;
+  getMonthlyLossesReturns: () => number;
 }
 
 // Mock data
@@ -174,6 +190,12 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [categories, setCategories] = useState<Category[]>(() => 
     loadFromStorage('posCategories', mockCategories)
   );
+  
+  const [stockAdjustments, setStockAdjustments] = useState<StockAdjustment[]>(() => 
+    loadFromStorage('posStockAdjustments', [])
+  );
+  
+  const { user } = useAuth();
 
   useEffect(() => {
     localStorage.setItem('posProducts', JSON.stringify(products));
@@ -182,6 +204,10 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     localStorage.setItem('posCategories', JSON.stringify(categories));
   }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem('posStockAdjustments', JSON.stringify(stockAdjustments));
+  }, [stockAdjustments]);
 
   const addProduct = (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
@@ -272,19 +298,143 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const updateStock = (productId: string, quantity: number) => {
-    setProducts(products.map(product => 
-      product.id === productId ? { 
-        ...product, 
-        stock: product.stock + quantity,
-        updatedAt: new Date().toISOString() 
-      } : product
+  const updateStock = (
+    productId: string, 
+    quantity: number, 
+    adjustmentType: StockAdjustmentType, 
+    supplierId?: string, 
+    notes?: string
+  ) => {
+    if (!user) {
+      toast.error('Pengguna tidak terautentikasi');
+      return;
+    }
+
+    const product = getProductById(productId);
+    if (!product) {
+      toast.error('Produk tidak ditemukan');
+      return;
+    }
+
+    // Check if the adjustment would make stock negative
+    if (product.stock + quantity < 0) {
+      toast.error('Stok tidak boleh negatif');
+      return;
+    }
+
+    // Validate adjustment quantity based on type
+    if (adjustmentType === 'purchase' && quantity <= 0) {
+      toast.error('Jumlah pembelian harus positif');
+      return;
+    }
+
+    if ((adjustmentType === 'loss' || adjustmentType === 'return') && quantity >= 0) {
+      toast.error('Jumlah kehilangan atau retur harus negatif');
+      return;
+    }
+
+    // Update product stock
+    const previousStock = product.stock;
+    const newStock = previousStock + quantity;
+    
+    setProducts(products.map(p => 
+      p.id === productId ? { ...p, stock: newStock, updatedAt: new Date().toISOString() } : p
     ));
+
+    // Create stock adjustment record
+    addStockAdjustment({
+      productId,
+      previousStock,
+      adjustmentQuantity: quantity,
+      newStock,
+      adjustmentType,
+      supplierId,
+      notes,
+      userId: user.id
+    });
+    
+    toast.success(`Stok produk ${product.name} berhasil diperbarui`);
+  };
+
+  const addStockAdjustment = (adjustment: Omit<StockAdjustment, 'id' | 'createdAt' | 'userName' | 'productName' | 'supplierName'>) => {
+    if (!user) return;
+    
+    const product = products.find(p => p.id === adjustment.productId);
+    if (!product) return;
+    
+    // Get supplier name if present
+    let supplierName;
+    if (adjustment.supplierId) {
+      // We'd normally fetch this from the supplier context
+      // For now just use a placeholder
+      supplierName = `Supplier ${adjustment.supplierId}`;
+    }
+    
+    const newAdjustment: StockAdjustment = {
+      ...adjustment,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      userName: user.name,
+      productName: product.name,
+      supplierName
+    };
+    
+    setStockAdjustments([...stockAdjustments, newAdjustment]);
+  };
+
+  const getStockAdjustments = () => {
+    return stockAdjustments.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  };
+
+  const getStockAdjustmentsByType = (type: StockAdjustmentType) => {
+    return getStockAdjustments().filter(adj => adj.adjustmentType === type);
+  };
+
+  const getStockAdjustmentsByDateRange = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    return getStockAdjustments().filter(adj => {
+      const date = new Date(adj.createdAt);
+      return date >= start && date <= end;
+    });
+  };
+
+  const getStockAdjustmentsByProduct = (productId: string) => {
+    return getStockAdjustments().filter(adj => adj.productId === productId);
+  };
+  
+  const getMonthlyPurchases = () => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+    
+    const purchases = getStockAdjustmentsByDateRange(startOfMonth, endOfMonth)
+      .filter(adj => adj.adjustmentType === 'purchase');
+    
+    return purchases.length;
+  };
+  
+  const getMonthlyLossesReturns = () => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+    
+    const lossesAndReturns = getStockAdjustmentsByDateRange(startOfMonth, endOfMonth)
+      .filter(adj => adj.adjustmentType === 'loss' || adj.adjustmentType === 'return');
+    
+    return lossesAndReturns.length;
   };
 
   const value = {
     products,
     categories,
+    stockAdjustments,
     addProduct,
     updateProduct,
     deleteProduct,
@@ -296,6 +446,13 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     updateCategory,
     deleteCategory,
     updateStock,
+    addStockAdjustment,
+    getStockAdjustments,
+    getStockAdjustmentsByType,
+    getStockAdjustmentsByDateRange,
+    getStockAdjustmentsByProduct,
+    getMonthlyPurchases,
+    getMonthlyLossesReturns,
   };
 
   return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;

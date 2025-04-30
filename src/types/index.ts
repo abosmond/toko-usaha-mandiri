@@ -55,6 +55,24 @@ export interface Transaction {
   createdAt: string;
 }
 
+export type StockAdjustmentType = 'purchase' | 'loss' | 'correction' | 'return';
+
+export interface StockAdjustment {
+  id: string;
+  productId: string;
+  productName: string;
+  previousStock: number;
+  adjustmentQuantity: number;
+  newStock: number;
+  adjustmentType: StockAdjustmentType;
+  supplierId?: string;
+  supplierName?: string;
+  notes?: string;
+  userId: string;
+  userName: string;
+  createdAt: string;
+}
+
 export interface StockMovement {
   id: string;
   productId: string;

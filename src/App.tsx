@@ -18,6 +18,7 @@ import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import Suppliers from "./pages/Suppliers";
 import Customers from "./pages/Customers";
+import StockManagement from "./pages/StockManagement";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -55,6 +56,12 @@ const App = () => {
                       <Route path="/products" element={
                         <ProtectedRoute allowedRoles={['admin', 'manager']}>
                           <Products />
+                        </ProtectedRoute>
+                      } />
+                      
+                      <Route path="/stock" element={
+                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                          <StockManagement />
                         </ProtectedRoute>
                       } />
                       

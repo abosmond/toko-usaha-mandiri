@@ -250,9 +250,15 @@ export const TransactionProvider: React.FC<{ children: React.ReactNode }> = ({ c
       createdAt: new Date().toISOString(),
     };
 
-    // Update stock for each product
+    // Update stock for each product using the new updateStock method
     cart.forEach((item) => {
-      updateStock(item.product.id, -item.quantity);
+      updateStock(
+        item.product.id,
+        -item.quantity,
+        'loss',
+        undefined,
+        `Penjualan dari transaksi #${transaction.id}`
+      );
     });
 
     // Add transaction to history
