@@ -15,7 +15,8 @@ import {
   Users,
   Truck,
   UserPlus,
-  Package
+  Package,
+  Settings
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -79,6 +80,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       name: "Pengguna",
       path: "/users",
       icon: <Users className="w-6 h-6" />,
+      allowedRoles: ['admin'] as UserRole[],
+    },
+    {
+      name: "Pengaturan",
+      path: "/settings",
+      icon: <Settings className="w-6 h-6" />,
       allowedRoles: ['admin'] as UserRole[],
     },
   ];

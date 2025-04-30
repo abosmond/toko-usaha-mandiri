@@ -9,6 +9,7 @@ import { ProductProvider } from "@/contexts/ProductContext";
 import { TransactionProvider } from "@/contexts/TransactionContext";
 import { SupplierProvider } from "@/contexts/SupplierContext";
 import { CustomerProvider } from "@/contexts/CustomerContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -19,6 +20,7 @@ import Users from "./pages/Users";
 import Suppliers from "./pages/Suppliers";
 import Customers from "./pages/Customers";
 import StockManagement from "./pages/StockManagement";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -32,69 +34,77 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <ProductProvider>
-              <TransactionProvider>
-                <SupplierProvider>
-                  <CustomerProvider>
-                    <Routes>
-                      <Route path="/login" element={<Login />} />
-                      
-                      <Route path="/" element={<Navigate to="/dashboard" />} />
-                      
-                      <Route path="/dashboard" element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                          <Dashboard />
-                        </ProtectedRoute>
-                      } />
-                      
-                      <Route path="/pos" element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager', 'cashier']}>
-                          <POS />
-                        </ProtectedRoute>
-                      } />
-                      
-                      <Route path="/products" element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                          <Products />
-                        </ProtectedRoute>
-                      } />
-                      
-                      <Route path="/stock" element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                          <StockManagement />
-                        </ProtectedRoute>
-                      } />
-                      
-                      <Route path="/suppliers" element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                          <Suppliers />
-                        </ProtectedRoute>
-                      } />
-                      
-                      <Route path="/customers" element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                          <Customers />
-                        </ProtectedRoute>
-                      } />
-                      
-                      <Route path="/reports" element={
-                        <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                          <Reports />
-                        </ProtectedRoute>
-                      } />
-                      
-                      <Route path="/users" element={
-                        <ProtectedRoute allowedRoles={['admin']}>
-                          <Users />
-                        </ProtectedRoute>
-                      } />
-                      
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </CustomerProvider>
-                </SupplierProvider>
-              </TransactionProvider>
-            </ProductProvider>
+            <SettingsProvider>
+              <ProductProvider>
+                <TransactionProvider>
+                  <SupplierProvider>
+                    <CustomerProvider>
+                      <Routes>
+                        <Route path="/login" element={<Login />} />
+                        
+                        <Route path="/" element={<Navigate to="/dashboard" />} />
+                        
+                        <Route path="/dashboard" element={
+                          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        } />
+                        
+                        <Route path="/pos" element={
+                          <ProtectedRoute allowedRoles={['admin', 'manager', 'cashier']}>
+                            <POS />
+                          </ProtectedRoute>
+                        } />
+                        
+                        <Route path="/products" element={
+                          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                            <Products />
+                          </ProtectedRoute>
+                        } />
+                        
+                        <Route path="/stock" element={
+                          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                            <StockManagement />
+                          </ProtectedRoute>
+                        } />
+                        
+                        <Route path="/suppliers" element={
+                          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                            <Suppliers />
+                          </ProtectedRoute>
+                        } />
+                        
+                        <Route path="/customers" element={
+                          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                            <Customers />
+                          </ProtectedRoute>
+                        } />
+                        
+                        <Route path="/reports" element={
+                          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                            <Reports />
+                          </ProtectedRoute>
+                        } />
+                        
+                        <Route path="/users" element={
+                          <ProtectedRoute allowedRoles={['admin']}>
+                            <Users />
+                          </ProtectedRoute>
+                        } />
+                        
+                        <Route path="/settings" element={
+                          <ProtectedRoute allowedRoles={['admin']}>
+                            <Settings />
+                          </ProtectedRoute>
+                        } />
+                        
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </CustomerProvider>
+                  </SupplierProvider>
+                </TransactionProvider>
+              </ProductProvider>
+            </SettingsProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
