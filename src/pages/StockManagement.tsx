@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, subDays } from 'date-fns';
 import { useProducts } from '@/contexts/ProductContext';
-import { useSupplier } from '@/contexts/SupplierContext';
+import { useSuppliers } from '@/contexts/SupplierContext';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layouts/AppLayout';
 import { StockAdjustment, StockAdjustmentType, Product, Supplier } from '@/types';
@@ -81,7 +81,7 @@ const StockManagement = () => {
     getLowStockProducts
   } = useProducts();
   
-  const { suppliers } = useSupplier();
+  const { suppliers } = useSuppliers();
   const { user } = useAuth();
   
   // Filtered adjustments based on search, date range, and tab

@@ -1,11 +1,18 @@
-
-import React, { useState } from 'react';
-import { useCustomers } from '@/contexts/CustomerContext';
-import { Customer } from '@/types';
+import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import AppLayout from '@/components/layouts/AppLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Customer } from '@/types';
+import { useCustomers } from '@/contexts/CustomerContext';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -13,142 +20,143 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
+} from "@/components/ui/table";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-
-// Form schema for validation
-const customerSchema = z.object({
-  name: z.string().min(2, { message: 'Nama harus minimal 2 karakter' }),
-  phone: z.string().optional(),
-  email: z.string().email({ message: 'Format email tidak valid' }).optional().or(z.literal('')),
-  address: z.string().optional(),
-});
-
-type CustomerFormValues = z.infer<typeof customerSchema>;
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { toast } from 'sonner';
 
 const Customers = () => {
-  const { customers, addCustomer, updateCustomer, deleteCustomer, searchCustomers, getCustomerTransactions } = useCustomers();
-  const [searchQuery, setSearchQuery] = useState('');
+  // States
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isViewTransactionsDialogOpen, setIsViewTransactionsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', email: '', address: '' });
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [editCustomer, setEditCustomer] = useState<Omit<Customer, 'createdAt' | 'updatedAt'> | null>(null);
 
-  const filteredCustomers = searchCustomers(searchQuery);
+  // Context
+  const { customers, addCustomer, updateCustomer, deleteCustomer, searchCustomers } = useCustomers();
 
-  // Form for adding customers
-  const addForm = useForm<CustomerFormValues>({
-    resolver: zodResolver(customerSchema),
-    defaultValues: {
-      name: '',
-      phone: '',
-      email: '',
-      address: '',
-    },
-  });
+  // Filtered customers based on search
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
 
-  // Form for editing customers
-  const editForm = useForm<CustomerFormValues>({
-    resolver: zodResolver(customerSchema),
-    defaultValues: {
-      name: '',
-      phone: '',
-      email: '',
-      address: '',
-    },
-  });
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleAddSubmit = (data: CustomerFormValues) => {
-    addCustomer(data);
-    setIsAddDialogOpen(false);
-    addForm.reset();
-  };
-
-  const handleEditSubmit = (data: CustomerFormValues) => {
-    if (selectedCustomer) {
-      updateCustomer(selectedCustomer.id, data);
-      setIsEditDialogOpen(false);
-      setSelectedCustomer(null);
+  // Update filtered customers when dependencies change
+  useEffect(() => {
+    if (searchQuery) {
+      setFilteredCustomers(searchCustomers(searchQuery));
+    } else {
+      setFilteredCustomers(customers);
     }
-  };
+  }, [customers, searchQuery, searchCustomers]);
 
-  const handleDeleteConfirm = () => {
-    if (selectedCustomer) {
-      deleteCustomer(selectedCustomer.id);
-      setIsDeleteDialogOpen(false);
-      setSelectedCustomer(null);
+  // Handle add customer form submission
+  const handleAddCustomer = () => {
+    if (!newCustomer.name || newCustomer.name.trim() === '') {
+      toast.error('Nama pelanggan harus diisi');
+      return;
     }
-  };
-
-  const handleEditClick = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    editForm.reset({
-      name: customer.name,
-      phone: customer.phone || '',
-      email: customer.email || '',
-      address: customer.address || '',
+    
+    // Now name is guaranteed to be provided
+    addCustomer({
+      name: newCustomer.name,
+      phone: newCustomer.phone || '',
+      email: newCustomer.email || '',
+      address: newCustomer.address || ''
     });
-    setIsEditDialogOpen(true);
+    
+    // Reset form and close dialog
+    setNewCustomer({ name: '', phone: '', email: '', address: '' });
+    setIsAddDialogOpen(false);
   };
 
-  const handleDeleteClick = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setIsDeleteDialogOpen(true);
+  // Handle edit customer form submission
+  const handleUpdateCustomer = () => {
+    if (!editCustomer) return;
+
+    if (!editCustomer.name || editCustomer.name.trim() === '') {
+      toast.error('Nama pelanggan harus diisi');
+      return;
+    }
+
+    updateCustomer(editCustomer.id, {
+      name: editCustomer.name,
+      phone: editCustomer.phone || '',
+      email: editCustomer.email || '',
+      address: editCustomer.address || ''
+    });
+
+    setEditCustomer(null);
+    setIsEditDialogOpen(false);
   };
 
-  const handleViewTransactionsClick = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setIsViewTransactionsDialogOpen(true);
+  // Handle delete customer
+  const handleDeleteCustomer = (id: string) => {
+    deleteCustomer(id);
+  };
+
+  // Format date to localized string
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
     <AppLayout>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Manajemen Pelanggan</h1>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold">Pelanggan</h1>
+
           <Button onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Tambah Pelanggan
+            <Plus className="mr-2 h-4 w-4" /> Tambah Pelanggan
           </Button>
         </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Daftar Pelanggan</CardTitle>
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Cari pelanggan..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
+        {/* Dashboard Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Total Pelanggan</CardTitle>
+              <CardDescription>Jumlah seluruh pelanggan</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center">
+                <span className="text-3xl font-bold">{customers.length}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Input
+            type="text"
+            placeholder="Cari nama pelanggan..."
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {/* Table */}
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nama Pelanggan</TableHead>
+                  <TableHead>Tanggal Daftar</TableHead>
+                  <TableHead>Nama</TableHead>
                   <TableHead>Telepon</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Alamat</TableHead>
@@ -156,259 +164,177 @@ const Customers = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCustomers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
-                      Tidak ada data pelanggan
-                    </TableCell>
-                  </TableRow>
-                ) : (
+                {filteredCustomers.length > 0 ? (
                   filteredCustomers.map((customer) => (
                     <TableRow key={customer.id}>
+                      <TableCell className="font-medium whitespace-nowrap">
+                        {formatDate(customer.createdAt)}
+                      </TableCell>
                       <TableCell>{customer.name}</TableCell>
                       <TableCell>{customer.phone || '-'}</TableCell>
                       <TableCell>{customer.email || '-'}</TableCell>
                       <TableCell className="max-w-xs truncate">{customer.address || '-'}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewTransactionsClick(customer)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditClick(customer)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteClick(customer)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedCustomer(customer);
+                            setEditCustomer({
+                              id: customer.id,
+                              name: customer.name,
+                              phone: customer.phone || '',
+                              email: customer.email || '',
+                              address: customer.address || ''
+                            });
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteCustomer(customer.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Hapus
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                      Tidak ada data pelanggan yang ditemukan.
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Add Customer Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Tambah Pelanggan Baru</DialogTitle>
+            <DialogTitle>Tambah Pelanggan</DialogTitle>
           </DialogHeader>
-          <Form {...addForm}>
-            <form onSubmit={addForm.handleSubmit(handleAddSubmit)} className="space-y-4">
-              <FormField
-                control={addForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nama Pelanggan*</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Masukkan nama pelanggan" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+
+          <div className="space-y-4 py-4">
+            {/* Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Nama *</Label>
+              <Input
+                id="name"
+                placeholder="Nama lengkap pelanggan"
+                value={newCustomer.name}
+                onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
               />
-              <FormField
-                control={addForm.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telepon</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Masukkan nomor telepon" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telepon</Label>
+              <Input
+                id="phone"
+                placeholder="Nomor telepon pelanggan"
+                value={newCustomer.phone}
+                onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
               />
-              <FormField
-                control={addForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Masukkan email" type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Alamat email pelanggan"
+                value={newCustomer.email}
+                onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
               />
-              <FormField
-                control={addForm.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Alamat</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Masukkan alamat" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+
+            {/* Address */}
+            <div className="space-y-2">
+              <Label htmlFor="address">Alamat</Label>
+              <Input
+                id="address"
+                placeholder="Alamat lengkap pelanggan"
+                value={newCustomer.address}
+                onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
               />
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Batal
-                </Button>
-                <Button type="submit">Simpan</Button>
-              </DialogFooter>
-            </form>
-          </Form>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Batal</Button>
+            <Button onClick={handleAddCustomer}>Simpan</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Customer Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit Pelanggan</DialogTitle>
           </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
-              <FormField
-                control={editForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nama Pelanggan*</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telepon</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Alamat</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                  Batal
-                </Button>
-                <Button type="submit">Perbarui</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Konfirmasi Hapus</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            Apakah Anda yakin ingin menghapus pelanggan <span className="font-semibold">{selectedCustomer?.name}</span>?
-            Tindakan ini tidak dapat dibatalkan.
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Batal
-            </Button>
-            <Button type="button" variant="destructive" onClick={handleDeleteConfirm}>
-              Hapus
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Customer Transactions Dialog */}
-      <Dialog open={isViewTransactionsDialogOpen} onOpenChange={setIsViewTransactionsDialogOpen}>
-        <DialogContent className="sm:max-w-[700px]">
-          <DialogHeader>
-            <DialogTitle>Riwayat Transaksi - {selectedCustomer?.name}</DialogTitle>
-          </DialogHeader>
-          {selectedCustomer && (
-            <div className="py-2">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID Transaksi</TableHead>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Pembayaran</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {getCustomerTransactions(selectedCustomer.id).length > 0 ? (
-                    getCustomerTransactions(selectedCustomer.id).map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell>{transaction.id}</TableCell>
-                        <TableCell>{new Date(transaction.createdAt).toLocaleString()}</TableCell>
-                        <TableCell>Rp {transaction.total.toLocaleString()}</TableCell>
-                        <TableCell className="capitalize">{transaction.paymentMethod}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                        Belum ada riwayat transaksi untuk pelanggan ini
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+          <div className="space-y-4 py-4">
+            {/* Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Nama *</Label>
+              <Input
+                id="name"
+                placeholder="Nama lengkap pelanggan"
+                value={editCustomer?.name || ''}
+                onChange={(e) => setEditCustomer({ ...editCustomer!, name: e.target.value })}
+              />
             </div>
-          )}
+
+            {/* Phone */}
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telepon</Label>
+              <Input
+                id="phone"
+                placeholder="Nomor telepon pelanggan"
+                value={editCustomer?.phone || ''}
+                onChange={(e) => setEditCustomer({ ...editCustomer!, phone: e.target.value })}
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Alamat email pelanggan"
+                value={editCustomer?.email || ''}
+                onChange={(e) => setEditCustomer({ ...editCustomer!, email: e.target.value })}
+              />
+            </div>
+
+            {/* Address */}
+            <div className="space-y-2">
+              <Label htmlFor="address">Alamat</Label>
+              <Input
+                id="address"
+                placeholder="Alamat lengkap pelanggan"
+                value={editCustomer?.address || ''}
+                onChange={(e) => setEditCustomer({ ...editCustomer!, address: e.target.value })}
+              />
+            </div>
+          </div>
+
           <DialogFooter>
-            <Button type="button" onClick={() => setIsViewTransactionsDialogOpen(false)}>
-              Tutup
-            </Button>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Batal</Button>
+            <Button onClick={handleUpdateCustomer}>Simpan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
