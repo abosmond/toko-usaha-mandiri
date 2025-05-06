@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'manager' | 'cashier';
 
 export interface User {
@@ -169,4 +168,110 @@ export interface DashboardData {
   top_products: TopProductData[];
   low_stock_products: Product[];
   payment_method_sales: PaymentMethodSalesData[];
+}
+
+export interface ReportParams {
+  start_date: string;
+  end_date: string;
+  format?: 'json' | 'csv' | 'pdf' | 'excel';
+  group_by?: 'day' | 'week' | 'month';
+}
+
+export interface SalesReportData {
+  period: string;
+  total_sales: number;
+  number_of_transactions: number;
+  average_transaction: number;
+  items_sold: number;
+  details: Array<{
+    date: string;
+    sales: number;
+    transactions: number;
+    average: number;
+    items: number;
+  }>;
+}
+
+export interface ProductSalesReportData {
+  period: string;
+  total_sales: number;
+  total_products: number;
+  products: Array<{
+    id: string;
+    name: string;
+    sku: string;
+    quantity: number;
+    unit_price: number;
+    total_sales: number;
+    profit: number;
+    profit_margin: number;
+  }>;
+}
+
+export interface CategorySalesReportData {
+  period: string;
+  total_sales: number;
+  categories: Array<{
+    id: string;
+    name: string;
+    products_count: number;
+    quantity_sold: number;
+    total_sales: number;
+    percentage: number;
+  }>;
+}
+
+export interface ProfitReportData {
+  period: string;
+  total_revenue: number;
+  total_cost: number;
+  gross_profit: number;
+  profit_margin: number;
+  details: Array<{
+    date: string;
+    revenue: number;
+    cost: number;
+    profit: number;
+    margin: number;
+  }>;
+}
+
+export interface InventoryReportData {
+  date_generated: string;
+  total_products: number;
+  total_value: number;
+  low_stock_count: number;
+  out_of_stock_count: number;
+  products: Array<{
+    id: string;
+    name: string;
+    sku: string;
+    category_name: string;
+    stock: number;
+    unit_cost: number;
+    unit_price: number;
+    value: number;
+    last_restock_date: string;
+  }>;
+}
+
+export interface CashierPerformanceReportData {
+  period: string;
+  cashiers: Array<{
+    id: string;
+    name: string;
+    email: string;
+    transactions_count: number;
+    total_sales: number;
+    average_transaction: number;
+    items_sold: number;
+    hours_worked?: number;
+    sales_per_hour?: number;
+  }>;
+}
+
+export interface EmailReportParams extends ReportParams {
+  recipients: string[];
+  subject: string;
+  message?: string;
 }
