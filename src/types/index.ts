@@ -275,3 +275,53 @@ export interface EmailReportParams extends ReportParams {
   subject: string;
   message?: string;
 }
+
+// Settings interfaces
+export interface StoreSettings {
+  id?: string;
+  store_name: string;
+  address: string;
+  phone: string;
+  email: string;
+  tax_percentage: number;
+  receipt_footer: string;
+  currency: string;
+  logo_path?: string;
+  updated_at?: string;
+}
+
+export interface AppSettings {
+  id?: string;
+  language: string;
+  theme: 'light' | 'dark' | 'system';
+  date_format: string;
+  default_currency_format: string;
+  low_stock_threshold_default: number;
+  notifications_enabled: boolean;
+  auto_print_receipt: boolean;
+  receipt_print_format: 'thermal_58mm' | 'thermal_80mm' | 'a4';
+  updated_at?: string;
+}
+
+export interface UserPreference {
+  id?: string;
+  user_id: string;
+  theme?: 'light' | 'dark' | 'system';
+  language?: string;
+  notifications_enabled?: boolean;
+  dashboard_layout?: Record<string, unknown>;
+  updated_at?: string;
+}
+
+export interface DatabaseBackup {
+  id: string;
+  filename: string;
+  size_bytes: number;
+  created_at: string;
+  created_by_user_id: string;
+  created_by_user_name: string;
+  notes?: string;
+  backup_type: 'manual' | 'automatic';
+  status: 'completed' | 'processing' | 'failed';
+  download_url?: string;
+}
