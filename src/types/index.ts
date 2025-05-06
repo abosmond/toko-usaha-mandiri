@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'manager' | 'cashier';
 
 export interface User {
@@ -116,4 +117,56 @@ export interface Customer {
   address?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// Dashboard interfaces
+export interface DashboardSummary {
+  total_sales: number;
+  total_sales_today: number;
+  total_sales_yesterday: number;
+  sales_growth_percentage: number;
+  total_products: number;
+  low_stock_products: number;
+  out_of_stock_products: number;
+  total_transactions: number;
+  transactions_today: number;
+  average_transaction_value: number;
+}
+
+export interface DailySalesData {
+  date: string;
+  sales: number;
+  transactions: number;
+}
+
+export interface CategorySalesData {
+  category_id: string;
+  category_name: string;
+  sales: number;
+  percentage: number;
+  product_count: number;
+}
+
+export interface TopProductData {
+  product_id: string;
+  product_name: string;
+  quantity_sold: number;
+  revenue: number;
+  profit?: number;
+}
+
+export interface PaymentMethodSalesData {
+  payment_method: PaymentMethod;
+  transactions: number;
+  total: number;
+  percentage: number;
+}
+
+export interface DashboardData {
+  summary: DashboardSummary;
+  daily_sales: DailySalesData[];
+  category_sales: CategorySalesData[];
+  top_products: TopProductData[];
+  low_stock_products: Product[];
+  payment_method_sales: PaymentMethodSalesData[];
 }
