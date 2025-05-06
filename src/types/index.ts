@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'manager' | 'cashier';
 
 export interface User {
@@ -7,6 +6,9 @@ export interface User {
   email: string;
   role: UserRole;
   avatar?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Category {
