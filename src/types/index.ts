@@ -100,12 +100,65 @@ export interface StockReport {
 export interface Supplier {
   id: string;
   name: string;
-  contactName?: string;
+  contactName?: string; // Note: Changed from contact_name to match existing convention
   phone?: string;
   email?: string;
   address?: string;
+  createdAt: string; // Note: Changed from created_at to match existing convention
+  updatedAt: string; // Note: Changed from updated_at to match existing convention
+  isActive?: boolean; // Note: Changed from is_active to match existing convention
+  notes?: string;
+}
+
+export interface PurchaseItem {
+  id: string;
+  purchaseId: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+export interface Purchase {
+  id: string;
+  supplierId: string; // Note: Changed from supplier_id to match existing convention
+  supplierName?: string;
+  referenceNumber: string; // Note: Changed from reference_number to match existing convention
+  purchaseDate: string; // Note: Changed from purchase_date to match existing convention
+  totalAmount: number; // Note: Changed from total_amount to match existing convention
+  paymentStatus: 'paid' | 'pending' | 'partial' | 'cancelled'; // Note: Changed from payment_status to match existing convention
+  receivedStatus: 'pending' | 'partial' | 'complete'; // Note: Changed from received_status to match existing convention
+  createdAt?: string;
+  updatedAt?: string;
+  items: PurchaseItem[];
+}
+
+export interface PurchaseReport {
+  period: string;
+  totalPurchases: number;
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  supplierName: string;
+  purchases: Purchase[];
+}
+
+export interface SupplierNote {
+  id: string;
+  supplierId: string;
+  text: string;
+  createdBy: string;
   createdAt: string;
-  updatedAt: string;
+}
+
+export interface SupplierImportResult {
+  importedCount: number;
+  failedCount: number;
+  errors?: Array<{
+    row: number;
+    error: string;
+  }>;
 }
 
 export interface Customer {
