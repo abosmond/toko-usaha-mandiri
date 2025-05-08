@@ -114,8 +114,12 @@ export interface Customer {
   phone?: string;
   email?: string;
   address?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string;  // Note: Changed from created_at to match existing convention
+  updatedAt: string;  // Note: Changed from updated_at to match existing convention
+  total_transactions?: number;
+  total_spent?: number;
+  last_transaction_date?: string;
+  notes?: string;
 }
 
 // Dashboard interfaces
